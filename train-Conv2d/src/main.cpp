@@ -31,7 +31,7 @@ int main(int argc, char** argv){
     /////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // dataset
-    const std::string dataset_dir = "data/DVSsim_dataset";
+    const std::string dataset_dir = "../data/DVSsim_checkerboard";
     const int inp_size[] = {2, 128, 128}; // (channels, height, width)
     const float inp_scale[] = {2.f, 2.f}; // (height, width)
 
