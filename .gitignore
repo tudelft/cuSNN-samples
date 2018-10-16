@@ -1,9 +1,13 @@
 /train/build/*
+!/train/build/.gitignore
 /train/weights/
 /train/.idea/
 /train/data/*
 !/train/data/DVSsim_dataset/
+/train/obj/*
+!/train/obj/.gitignore
 *.trace
 *.a
+*.o
 *.ppm
 .project
