@@ -1,0 +1,9 @@
+/train/build/*
+/train/weights/
+/train/.idea/
+/train/data/
+!/train/data/DVSsim_dataset/
+*.trace
+*.a
+*.ppm
+.project
