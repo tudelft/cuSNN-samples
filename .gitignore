@@ -3,7 +3,7 @@
 /train-Conv2d/weights/
 /train-Conv2d/.idea/
 /data/*
-!data/DVSsim_dataset/
+!data/DVSsim_checkerboard/
 /train-Conv2d/obj/*
 !/train-Conv2d/obj/.gitignore
 *.trace
