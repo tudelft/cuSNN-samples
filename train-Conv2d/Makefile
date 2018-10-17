@@ -2,18 +2,24 @@
 .PHONY: clean
 
 PLOTTER = true
-SNAPSHOT = true
+SNAPSHOT = false
+
+LIBSUSR1 = -L/usr/local/lib -lcuSNN -lcnpy -lz -lGL -lGLU -lX11 -lglut
+LIBSUSR2 = -L/usr/local/lib -lcuSNN -lz -lGL -lGLU -lX11 -lglut
+LIBSUSR3 = -L/usr/local/lib -lcuSNN -lcnpy -lz
+LIBSUSR4 = -L/usr/local/lib -lcuSNN
+LIBSCUSTOM =
 
 ifeq ($(PLOTTER),true)
     ifeq ($(SNAPSHOT),true)
-        CFLAGS = -DOPENGL -DNPY --std=c++11 -L/usr/local/lib -lcuSNN -lcnpy -lz -lGL -lGLU -lX11 -lglut
+        CFLAGS = -DOPENGL -DNPY --std=c++11 $(LIBSCUSTOM) $(LIBSUSR1)
     else
-        CFLAGS = -DOPENGL --std=c++11 -L/usr/local/lib -lcuSNN -lGL -lGLU -lX11 -lglut
+        CFLAGS = -DOPENGL --std=c++11 $(LIBSCUSTOM) $(LIBSUSR2)
     endif
 else ifeq ($(SNAPSHOT),true)
-    CFLAGS = -DNPY --std=c++11 -L/usr/local/lib -lcuSNN -lcnpy -lz
+    CFLAGS = -DNPY --std=c++11 $(LIBSCUSTOM) $(LIBSUSR3)
 else
-    CFLAGS = --std=c++11 -L/usr/local/lib -lcuSNN
+    CFLAGS = --std=c++11 $(LIBSCUSTOM) $(LIBSUSR4)
 endif
 
 BUILD = build/main
