@@ -12,3 +12,5 @@
 *.o
 *.ppm
 .project
+*.xml
+*.iml

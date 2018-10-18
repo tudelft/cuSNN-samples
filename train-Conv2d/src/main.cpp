@@ -53,7 +53,6 @@ int main(int argc, char** argv){
     // neuron and synapse models
     float neuron_refrac = 3.f; // ms
     float synapse_trace_init = 0.15f;
-    float synapse_inh_scaling = 0.5f;
 
     // STDP settings
     int stdp_stats_window = 250;
@@ -82,8 +81,8 @@ int main(int argc, char** argv){
     if (cudaDeviceCount) {
         cudaSetDevice(0);
         printf("\n");
-        SNN = new Network(inp_size, inp_scale, sim_step, neuron_refrac, synapse_trace_init,
-                          synapse_inh_scaling, stdp_rate, stdp_stats_window, stdp_convg_th, stdp_limit_updates);
+        SNN = new Network(inp_size, inp_scale, sim_step, neuron_refrac, synapse_trace_init, stdp_rate,
+                          stdp_stats_window, stdp_convg_th, stdp_limit_updates);
     } else {
         printf("Error: No CUDA devices found.\n");
         return 0;
@@ -91,11 +90,11 @@ int main(int argc, char** argv){
 
     /* NETWORK STRUCTURE */
     /* void add_layer(std::string layer_type, bool stdp, bool load_weights, bool homeostasis, float Vth, float decay,
-                      float alpha, float max_delay = 1.f, int num_delays_synapse = 1, int rf_side = 7,
-                      int out_channels = 8, std::string padding = "none", float w_init = 0.5f,
-                      float stdp_scale_a = 0.f) */
+                      float alpha, float max_delay = 1.f, int num_delays_synapse = 1, float synapse_inh_scaling = 0.f,
+                      int rf_side = 7, int out_channels = 8, std::string padding = "none", float w_init = 0.5f,
+                      float stdp_scale_a = 0.f); */
     SNN->h_layers = (Layer **) malloc(sizeof(Layer*) * 4);
-    SNN->add_layer("Conv2d", true, true, true, 1.f, 5.f, 0.4f, 1.f, 1, 7, 16, "half", 0.5f, 0.f);
+    SNN->add_layer("Conv2d", true, true, true, 1.f, 5.f, 0.4f, 1.f, 1, 0.5, 7, 16, "half", 0.5f, 0.f);
     SNN->create_network(isInterrupted);
 
     // network visualization

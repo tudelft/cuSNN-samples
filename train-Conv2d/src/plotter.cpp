@@ -379,7 +379,9 @@ void plotterGL::display_kernels() {
                             int syn_delay_index = ch * SNN_aux->h_layers[l]->rf_side * SNN_aux->h_layers[l]->rf_side *
                                     SNN_aux->h_layers[l]->num_delays_synapse +
                                     syn_index * SNN_aux->h_layers[l]->num_delays_synapse + d;
-                            float weight = SNN_aux->h_layers[l]->h_kernels[k]->h_weights_exc[syn_delay_index];
+                            float weight = SNN_aux->h_layers[l]->h_kernels[k]->h_weights_exc[syn_delay_index] +
+                                           SNN_aux->h_layers[l]->synapse_inh_scaling *
+                                           SNN_aux->h_layers[l]->h_kernels[k]->h_weights_inh[syn_delay_index];
                             if (weight > 1.f) weight = 1.f;
                             else if (weight < 0.f) weight = 0.f;
 
