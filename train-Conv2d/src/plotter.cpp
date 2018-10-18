@@ -71,8 +71,8 @@ Layer_colors::~Layer_colors(){
 
 
 // add layer data
-void plotterGL::addLayerColors(int layer, int cnt_kernel, std::vector<int> kernelsl) {
-    this->h_layer_colors[layer] = new Layer_colors(cnt_kernel, kernelsl);
+void plotterGL::addLayerColors(int layer, int cnt_kernel, std::vector<int> kernels) {
+    this->h_layer_colors[layer] = new Layer_colors(cnt_kernel, kernels);
 }
 
 
@@ -81,7 +81,7 @@ void plotterGL::addLayerColors(int layer, int cnt_kernel, std::vector<int> kerne
 PostTrace::PostTrace(int idx) {
     glutInitWindowPosition(window_width * idx, 125 + 2*window_height);
     glutInitWindowSize(window_width, window_height);
-    std::string title = "Layer " + std::to_string(idx) + ": " + SNN_aux->h_layers[idx]->layer_type_str.c_str() +
+    std::string title = "Layer " + std::to_string(idx) + ": " + SNN_aux->h_layers[idx]->layer_type_str +
             " -- Post-synaptic trace";
     const char* title_char = title.c_str();
     this->WindowID = glutCreateWindow(title_char);
@@ -90,10 +90,6 @@ PostTrace::PostTrace(int idx) {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
 }
-
-
-// destructor
-PostTrace::~PostTrace(){}
 
 
 // add window
@@ -111,7 +107,7 @@ KernelWeights::KernelWeights(int idx, int l, int d) {
     int col = idx % 4;
     glutInitWindowPosition(window_width * (col+1), 100 + (window_height + 25) * row);
     glutInitWindowSize(window_width, window_height);
-    std::string title = "Layer " + std::to_string(l) + ": " + SNN_aux->h_layers[l]->layer_type_str.c_str() +
+    std::string title = "Layer " + std::to_string(l) + ": " + SNN_aux->h_layers[l]->layer_type_str +
             " -- Conv. kernels (" + std::to_string(SNN_aux->h_layers[l]->h_delay_indices[d]) + "ms delay)";
     const char* title_char = title.c_str();
     this->WindowID = glutCreateWindow(title_char);
@@ -120,10 +116,6 @@ KernelWeights::KernelWeights(int idx, int l, int d) {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
 }
-
-
-// destructor
-KernelWeights::~KernelWeights(){}
 
 
 // add window
@@ -138,7 +130,7 @@ void plotterGL::addKernelWindow(int l, int d) {
 NetActivity::NetActivity(int idx) {
     glutInitWindowPosition(0, 100 + (window_height + 25) * (idx + 1));
     glutInitWindowSize(window_width, window_height);
-    std::string title = "Layer " + std::to_string(idx) + ": " + SNN_aux->h_layers[idx]->layer_type_str.c_str() +
+    std::string title = "Layer " + std::to_string(idx) + ": " + SNN_aux->h_layers[idx]->layer_type_str +
             " -- Activity";
     const char* title_char = title.c_str();
     this->WindowID = glutCreateWindow(title_char);
@@ -147,10 +139,6 @@ NetActivity::NetActivity(int idx) {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
 }
-
-
-// destructor
-NetActivity::~NetActivity(){}
 
 
 // add window
@@ -325,8 +313,8 @@ void plotterGL::display_input() {
             int col_idx = col - SNN_aux->inp_size[2] / 2;
             int row_Idx = SNN_aux->inp_size[1] / 2 - row - 1;
             glColor4f(0.5, 0.5, 0.5, alpha);
-            if (SNN_aux->h_inputs[ch0_idx]) glColor4f(0.0, 0.0, 0.0, alpha); // OFF -> black
-            if (SNN_aux->h_inputs[ch1_idx]) glColor4f(1.0, 1.0, 1.0, alpha); // ON -> white
+            if ((bool) SNN_aux->h_inputs[ch0_idx]) glColor4f(0.0, 0.0, 0.0, alpha); // OFF -> black
+            if ((bool) SNN_aux->h_inputs[ch1_idx]) glColor4f(1.0, 1.0, 1.0, alpha); // ON -> white
 
             glRectf((GLfloat) (col_idx / (SNN_aux->inp_size[2] / 2.0)),
                     (GLfloat) (row_Idx / (SNN_aux->inp_size[1] / 2.0)),
@@ -351,7 +339,7 @@ void plotterGL::display_kernels() {
             glClearColor(0.f, 0.f, 0.f, 1.f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            float rows_max = floor(sqrt((float) SNN_aux->h_layers[l]->cnt_kernels));
+            float rows_max = floorf(sqrtf((float) SNN_aux->h_layers[l]->cnt_kernels));
             if ((int) rows_max % 2 == 1 && rows_max != 1.f) rows_max--;
             float cols_max = (float) SNN_aux->h_layers[l]->cnt_kernels / rows_max;
 
@@ -540,7 +528,7 @@ void plotterGL::display_internal() {
                             continue;
 
                         // if neuron spikes
-                        if (SNN_aux->h_layers[l]->h_kernels[kernel]->h_node_train[begin]) {
+                        if ((bool) SNN_aux->h_layers[l]->h_kernels[kernel]->h_node_train[begin]) {
                             red += this->h_layer_colors[l]->h_colors_r[k];
                             green += this->h_layer_colors[l]->h_colors_g[k];
                             blue += this->h_layer_colors[l]->h_colors_b[k];
@@ -561,8 +549,8 @@ void plotterGL::display_internal() {
                 }
             }
         } else {
-            float rows_max = 0.f, cols_max = 0.f;
-            rows_max = floor(sqrtf(SNN_aux->h_layers[l]->cnt_kernels));
+            float rows_max, cols_max;
+            rows_max = floorf(sqrtf(SNN_aux->h_layers[l]->cnt_kernels));
             if ((int) rows_max % 2 == 1 && rows_max != 1.f) rows_max--;
             cols_max = (float) SNN_aux->h_layers[l]->cnt_kernels / rows_max;
 
@@ -571,7 +559,7 @@ void plotterGL::display_internal() {
                     continue;
 
                 // if neuron spikes
-                if (SNN_aux->h_layers[l]->h_kernels[this->h_layer_colors[l]->h_kernels[k]]->h_node_train[0]) {
+                if ((bool) SNN_aux->h_layers[l]->h_kernels[this->h_layer_colors[l]->h_kernels[k]]->h_node_train[0]) {
                     int row = k % (int) rows_max;
                     int col = k / (int) rows_max;
                     float cols_aux = col - cols_max / 2;
@@ -761,7 +749,7 @@ void plotterGL::keyboard_posttrace(int state) {
 
 // save current window
 void save_image(std::string filename) {
-    unsigned char* image = (unsigned char*) malloc(sizeof(unsigned char) * 3 * window_width * window_height);
+    auto* image = (unsigned char*) malloc(sizeof(unsigned char) * 3 * window_width * window_height);
     glReadPixels(0, 0, window_width, window_height, GL_RGB, GL_UNSIGNED_BYTE, image);
     PPM_writer(image, filename.c_str(), window_width, window_height);
 }

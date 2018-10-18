@@ -128,7 +128,7 @@ void gt2buffer_DVSsim(const std::string& dataset_dir, std::vector<float>& gt_wx,
     for (int i = 0; i < (int) ((float) gt_wx_aux.size() / sim_step); i++) {
         float ms_idx = (float) i * sim_step;
         int ms_up = (int) ceilf(ms_idx);
-        int ms_down = (int) floor(ms_idx);
+        int ms_down = (int) floorf(ms_idx);
         if (ms_down != ms_up && ms_up <= ms_end-2) {
             gt_wx.push_back((gt_wx_aux[ms_down]*(ms_up-ms_idx)+gt_wx_aux[ms_up]*(ms_idx-ms_down))/(ms_up-ms_down));
             gt_wy.push_back((gt_wy_aux[ms_down]*(ms_up-ms_idx)+gt_wy_aux[ms_up]*(ms_idx-ms_down))/(ms_up-ms_down));

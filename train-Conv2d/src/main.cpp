@@ -65,7 +65,7 @@ int main(int argc, char** argv){
     /////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // filename for weight file
-    time_t t = time(0);
+    time_t t = time(nullptr);
     struct tm * now = localtime(&t);
     char buffer [80];
     std::stringstream ss;
@@ -125,7 +125,7 @@ int main(int argc, char** argv){
     std::string file;
     std::vector<int> ets, ex, ey, ep, events_step;
     std::vector<float> gt_wx, gt_wy;
-    srand((unsigned int) time(NULL));
+    srand((unsigned int) time(nullptr));
     signal(SIGINT, handleInterrupt);
 
     // load weights
