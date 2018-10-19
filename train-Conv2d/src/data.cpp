@@ -227,16 +227,16 @@ void weights_to_csv(std::string& foldername, Network *SNN) {
     if (stat(folder.c_str(), &sb) != 0) {
         const int dir_err = mkdir(folder.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
         if (-1 == dir_err) {
-            printf("Error creating directory\n");
-            exit(1);
+            printf("Error: weights_dir could not be created\n");
+            return;
         }
     }
     folder += foldername;
     if (stat(folder.c_str(), &sb) != 0) {
         const int dir_err = mkdir(folder.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
         if (-1 == dir_err) {
-            printf("Error creating directory\n");
-            exit(1);
+            printf("Error: weights_dir could not be created\n");
+            return;
         }
     }
 
@@ -452,8 +452,8 @@ void snapshot_to_file(Network *SNN, std::string foldername, int layer, bool use_
         const int dir_err = mkdir(folder.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
         if (-1 == dir_err) {
             std::cout << folder;
-            printf("Error creating directory\n");
-            exit(1);
+            printf("Error: snapshots_dir could not be created\n");
+            return;
         }
     }
 

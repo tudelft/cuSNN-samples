@@ -6,6 +6,7 @@
 #include <GL/freeglut.h>
 #include <cmath>
 #include <algorithm>
+#include <sys/stat.h>
 #include "cusnn.cuh"
 
 
@@ -34,7 +35,6 @@ public:
 
     /* FUNCTIONS */
     KernelWeights(int idx, int l, int d);
-    ~KernelWeights();
 };
 
 
@@ -46,7 +46,6 @@ public:
 
     /* FUNCTIONS */
     NetActivity(int idx);
-    ~NetActivity();
 };
 
 
@@ -58,7 +57,6 @@ public:
 
     /* FUNCTIONS */
     PostTrace(int idx);
-    ~PostTrace();
 };
 
 
@@ -70,6 +68,7 @@ public:
     int cnt_posttrace_window;
     int cnt_kernel_window;
     int cnt_internal_window;
+    bool enable_snapshot;
     std::string snapshots_dir;
 
     Layer_colors** h_layer_colors;

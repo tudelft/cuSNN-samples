@@ -160,7 +160,12 @@ plotterGL::plotterGL(Network *SNN, std::vector<int> kernels, std::string snapsho
 
     SNN_aux = SNN;
     this->cnt_snapshots = 0;
+    this->enable_snapshot = true;
     this->snapshots_dir = snapshots_dir;
+
+    struct stat sb;
+    if (stat(this->snapshots_dir.c_str(), &sb) != 0)
+        this->enable_snapshot = false;
 
     // kernel colors
     this->h_layer_colors = (Layer_colors **) malloc(sizeof(Layer_colors*) * SNN->cnt_layers);
@@ -283,11 +288,14 @@ void keyboard(unsigned char key, int /*x*/, int /*y*/) {
         // store one image per window
         case(32):
             if (plot) {
-                if (plot_input) plotter->keyboard_input(32);
-                if (plot_kernels) plotter->keyboard_kernel(32);
-                if (plot_internal) plotter->keyboard_internal(32);
-                if (plot_posttrace) plotter->keyboard_posttrace(32);
-                plotter->cnt_snapshots++;
+                if (!plotter->enable_snapshot) printf("Warning: snapshots_dir does not exist\n");
+                else {
+                    if (plot_input) plotter->keyboard_input(32);
+                    if (plot_kernels) plotter->keyboard_kernel(32);
+                    if (plot_internal) plotter->keyboard_internal(32);
+                    if (plot_posttrace) plotter->keyboard_posttrace(32);
+                    plotter->cnt_snapshots++;
+                }
             }
             return;
     }
