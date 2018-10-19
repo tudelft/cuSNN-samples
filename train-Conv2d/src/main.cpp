@@ -133,6 +133,7 @@ int main(int argc, char** argv){
         csv_to_weights(weights_dir, SNN);
         SNN->weights_to_device();
     }
+    if (!isInterrupted) SNN->summary();
 
     // dataset to buffer
     std::vector<std::string> data_indices;

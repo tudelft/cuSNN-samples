@@ -18,6 +18,7 @@ void handleInterrupt_data(int sig){
 
 
 void indices2buffer(const std::string& dataset_dir, std::vector<std::string>& data_indices, bool& isInterrupted) {
+    if (isInterrupted) return;
 
     std::string filename, type, folder;
     filename += dataset_dir + std::string("/data_file.csv");
@@ -42,6 +43,7 @@ void data2buffer_DVSsim(const std::string& dataset_dir, std::vector<std::string>
                         std::vector<int>& ex, std::vector<int>& ey, std::vector<int>& ep, std::vector<int>& events_step,
                         int& ms_init, int& ms_end, std::string& file, const float sim_step, bool random,
                         bool& isInterrupted) {
+    if (isInterrupted) return;
 
     std::string filename;
     bool init, start;
@@ -102,6 +104,7 @@ void data2buffer_DVSsim(const std::string& dataset_dir, std::vector<std::string>
 
 void gt2buffer_DVSsim(const std::string& dataset_dir, std::vector<float>& gt_wx, std::vector<float>& gt_wy,
                       int& ms_init, int& ms_end, std::string& file, const float sim_step, bool& isInterrupted) {
+    if (isInterrupted) return;
 
     int ms;
     float wx, wy, d;
@@ -144,6 +147,7 @@ void feed_network(std::vector<int>& ets, std::vector<int>& ex, std::vector<int>&
                   std::vector<int>& events_step, std::vector<float>& gt_wx, std::vector<float>& gt_wy, int sim_nsteps,
                   Network *SNN, plotterGL *plotter, const bool openGL, const bool snapshots, std::string snapshots_dir,
                   int snapshots_freq, int snapshots_layer, const bool use_gt, bool inference, bool& isInterrupted) {
+    if (isInterrupted) return;
 
     int idx_step;
     if (events_step.size() <= sim_nsteps) sim_nsteps = (int) events_step.size() - 1;
