@@ -94,7 +94,7 @@ int main(int argc, char** argv){
                       int rf_side = 7, int out_channels = 8, std::string padding = "none", float w_init = 0.5f,
                       float stdp_scale_a = 0.f); */
     SNN->h_layers = (Layer **) malloc(sizeof(Layer*) * 4);
-    SNN->add_layer("Conv2d", true, true, true, 1.f, 5.f, 0.4f, 1.f, 1, 0.5, 7, 16, "half", 0.5f, 0.f);
+    SNN->add_layer("Conv2d", true, true, true, 1.f, 5.f, 0.3f, 1.f, 1, 0.5, 7, 2, "half", 0.5f, 0.f);
     SNN->create_network(isInterrupted);
 
     // network visualization
