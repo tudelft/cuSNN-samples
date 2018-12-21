@@ -12,9 +12,8 @@ More varied samples will be included in the near future.
 * **train-SSConv**: Train a sigle-synaptic Conv2d (SS-Conv) layer.
 * **test-SSConv**: Test an SS-Conv layer.
 * **train-MSConv**: Train a multi-synaptic Conv2d (MS-Conv) layer, preceded by a pre-trained SS-Conv layer.
-* **test-MSConv**: Test a three-layer network with a SS-Conv, a Merge, and an MS-Conv layer (in this order).
+* **test-MSConv**: Test a three-layer network with a SS-Conv, a Merge, and an MS-Conv layer.
 * **train-Dense**: Train a Dense layer, preceded by pre-trained SS-Conv and MS-Conv layers.
-* **test-MSConv**: Test a five-layer network with a SS-Conv, a Merge, an MS-Conv, a Pooling, and a Dense layer 
-(in this order).
+* **test-MSConv**: Test a five-layer network with a SS-Conv, a Merge, an MS-Conv, a Pooling, and a Dense layer.
 * **record-spikes**: Record the spiking activity of a five-layer network with a SS-Conv, a Merge, an MS-Conv, 
-a Pooling, and a Dense layer (in this order). Requires the [**cnpy library**](https://github.com/rogersce/cnpy "cnpy library (C++ arrays to Numpy)").
+a Pooling, and a Dense layer. Requires the [**cnpy library**](https://github.com/rogersce/cnpy "cnpy library (C++ arrays to Numpy)").
