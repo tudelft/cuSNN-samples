@@ -2,13 +2,13 @@
 .PHONY: clean
 
 PLOTTER = true
-SNAPSHOT = true
+SNAPSHOT = false
 
-LIBSUSR1 = -L/usr/local/lib -lcnpy -lz -lGL -lGLU -lX11 -lglut
-LIBSUSR2 = -L/usr/local/lib -lz -lGL -lGLU -lX11 -lglut
-LIBSUSR3 = -L/usr/local/lib -lcnpy -lz
+LIBSUSR1 = -L/usr/local/lib -lcuSNN -lcnpy -lz -lGL -lGLU -lX11 -lglut
+LIBSUSR2 = -L/usr/local/lib -lcuSNN -lz -lGL -lGLU -lX11 -lglut
+LIBSUSR3 = -L/usr/local/lib -lcuSNN -lcnpy -lz
 LIBSUSR4 =
-LIBSCUSTOM = -I/home/fede/Software/cuSNN/include -L/home/fede/Software/cuSNN/lib -lcuSNN
+LIBSCUSTOM =
 
 ifeq ($(PLOTTER),true)
     ifeq ($(SNAPSHOT),true)
