@@ -55,6 +55,7 @@
 !/record-spikes/obj/.gitignore
 
 /snapshots/*
+!/snapshots/.gitignore
 /.idea/
 *.trace
 *.a
