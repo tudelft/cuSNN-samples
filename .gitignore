@@ -4,8 +4,6 @@
 /train-Conv2d/.idea/
 /.idea/
 /train-Conv2d/cmake-build-debug/
-/data/*
-!data/DVSsim_checkerboard/
 /train-Conv2d/obj/*
 !/train-Conv2d/obj/.gitignore
 *.trace
