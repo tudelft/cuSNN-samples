@@ -1,23 +1,30 @@
 /train-SSConv/build/*
 /test-SSConv/build/*
+/train-MSConv/build/*
 
 !/train-SSConv/build/.gitignore
 !/test-SSConv/build/.gitignore
+!/train-MSConv/build/.gitignore
 
 /train-SSConv/weights/
 /test-SSConv/weights/
+/train-MSConv/weights/
 
 /train-SSConv/.idea/
 /test-SSConv/.idea/
+/train-MSConv/.idea/
 
 /train-SSConv/cmake-build-debug/
 /test-SSConv/cmake-build-debug/
+/train-MSConv/cmake-build-debug/
 
 /train-SSConv/obj/*
 /test-SSConv/obj/*
+/train-MSConv/obj/*
 
 !/train-SSConv/obj/.gitignore
 !/test-SSConv/obj/.gitignore
+!/train-MSConv/obj/.gitignore
 
 /.idea/
 *.trace
