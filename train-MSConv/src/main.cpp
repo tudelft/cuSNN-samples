@@ -41,6 +41,7 @@ int main(int argc, char** argv){
     const float sim_step = 1.f; // ms
     const float sim_int = 1.f; // sim_steps input integration
     const float scale_ets = 1.f;
+    const int sim_step_range[] = {0, 0}; // offsets from sequence start/end
 
     const bool openGL = true;
     const bool load_model = true;
@@ -154,8 +155,8 @@ int main(int argc, char** argv){
         auto t0 = Time::now();
 
         // feed the network
-        feed_network(dataset_dir, data_indices, sim_int, sim_step, sim_num_steps, scale_ets, SNN, plotter, openGL,
-                     data_augmentation, record_activity, snapshots_dir, weights_out, true, break_sim);
+        feed_network(dataset_dir, data_indices, sim_int, sim_step, sim_step_range, sim_num_steps, scale_ets, SNN,
+                     plotter, openGL, data_augmentation, record_activity, snapshots_dir, weights_out, true, break_sim);
 
         // store weights
         if (SNN->learning && store_model_it) {

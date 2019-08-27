@@ -9,15 +9,14 @@ bool plot = true;
 bool plot_input = true;
 bool plot_weights = true;
 bool plot_spikes = true;
-bool plot_trace = false;
 
 // input window
 GLint input_window;
 bool input_text = false;
 
 // window size
-unsigned int window_width = 200;
-unsigned int window_height = 200;
+unsigned int window_width = 500;
+unsigned int window_height = 500;
 int tostring_precision = 2;
 
 
@@ -71,29 +70,6 @@ void plotterGL::add_colors(int layer, int cnt_kernel, std::vector<int> kernels) 
 }
 
 
-/* TRACE */
-// constructor
-Trace::Trace(Network *SNN, int idx) {
-    glutInitWindowPosition(window_width, (idx+1) * (window_height+30));
-    glutInitWindowSize(window_width, window_height);
-    std::string title = "Layer " + std::to_string(idx) + ": " + SNN->h_layers[idx]->layer_type_str +
-            " -- Post-synaptic trace";
-    const char* title_char = title.c_str();
-    this->WindowID = glutCreateWindow(title_char);
-    glClearColor(0.f, 0.f, 0.f, 1.f);
-    glClear(GL_COLOR_BUFFER_BIT);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable(GL_BLEND);
-}
-
-
-// add window
-void plotterGL::add_trace_window(Network *SNN) {
-    this->h_trace[this->cnt_trace_windows] = new Trace(SNN, this->cnt_trace_windows);
-    this->cnt_trace_windows++;
-}
-
-
 /* Weights */
 // constructor
 Weights::Weights(Network *SNN, int idx, int l, int d) {
@@ -102,15 +78,6 @@ Weights::Weights(Network *SNN, int idx, int l, int d) {
     int row = idx / num_columns;
     int col = idx % num_columns;
     int loc_width = 1, loc_height = 0;
-
-    if (plot_trace && row > 0) {
-        idx -= num_columns;
-        num_columns--;
-        row = idx / num_columns;
-        col = idx % num_columns;
-        loc_width = 2;
-        loc_height = 1;
-    }
 
     glutInitWindowPosition(window_width * (col+loc_width), (window_height + 30) * (row+loc_height));
     glutInitWindowSize(window_width, window_height);
@@ -174,8 +141,8 @@ plotterGL::plotterGL(Network *SNN, std::vector<int> kernels, std::string snapsho
         this->enable_snapshot = false;
 
     // kernel colors
-    this->h_colors = (Colors **) malloc(sizeof(Colors*) * SNN->cnt_layers);
-    for (int l = 0; l < SNN->cnt_layers; l++)
+    this->h_colors = (Colors **) malloc(sizeof(Colors*) * SNN->h_cnt_layers[0]);
+    for (int l = 0; l < SNN->h_cnt_layers[0]; l++)
         this->add_colors(l, SNN->h_layers[l]->cnt_kernels, kernels);
 
     // initialize GL
@@ -196,13 +163,13 @@ plotterGL::plotterGL(Network *SNN, std::vector<int> kernels, std::string snapsho
     // initialize windows for weights
     if (plot_weights) {
         int num_windows = 0;
-        for (int l = 0; l < SNN->cnt_layers; l++){
+        for (int l = 0; l < SNN->h_cnt_layers[0]; l++){
             for (int d = 0; d < SNN->h_layers[l]->num_delays; d++)
                 num_windows++;
         }
         this->cnt_weights_windows = 0;
         this->h_weights = (Weights **) malloc(sizeof(Weights*) * num_windows);
-        for (int l = 0; l < SNN->cnt_layers; l++){
+        for (int l = 0; l < SNN->h_cnt_layers[0]; l++){
             for (int d = 0; d < SNN->h_layers[l]->num_delays; d++) {
                 this->add_weights_window(this->SNN, l, d);
             }
@@ -212,17 +179,9 @@ plotterGL::plotterGL(Network *SNN, std::vector<int> kernels, std::string snapsho
     // initialize windows for spikes
     if (plot_spikes) {
         this->cnt_spikes_windows = 0;
-        this->h_spikes = (Spikes **) malloc(sizeof(Spikes*) * SNN->cnt_layers);
-        for (int l = 0; l < SNN->cnt_layers; l++)
+        this->h_spikes = (Spikes **) malloc(sizeof(Spikes*) * SNN->h_cnt_layers[0]);
+        for (int l = 0; l < SNN->h_cnt_layers[0]; l++)
             this->add_spikes_window(this->SNN);
-    }
-
-    // initialize windows for post-synaptic trace
-    if (plot_trace) {
-        this->cnt_trace_windows = 0;
-        this->h_trace = (Trace **) malloc(sizeof(Trace*) * SNN->cnt_layers);
-        for (int l = 0; l < SNN->cnt_layers; l++)
-            this->add_trace_window(this->SNN);
     }
 
     // activate alpha
@@ -260,7 +219,6 @@ void plotterGL::display() {
     if (plot_input) plotter_static->display_input();
     if (plot_weights) plotter_static->display_weights();
     if (plot_spikes) plotter_static->display_spikes();
-    if (plot_trace) plotter_static->display_trace();
 }
 
 
@@ -273,7 +231,6 @@ void plotterGL::timerEvent(int value) {
     }
     if (plot_weights) plotter_static->timer_weights();
     if (plot_spikes) plotter_static->timer_spikes();
-    if (plot_trace) plotter_static->timer_trace();
     glutTimerFunc(0, timerEvent, 0);
 }
 
@@ -288,7 +245,6 @@ void plotterGL::keyboard(unsigned char key, int /*x*/, int /*y*/) {
                 if (plot_input) plotter_static->keyboard_input(27);
                 if (plot_weights) plotter_static->keyboard_weights(27);
                 if (plot_spikes) plotter_static->keyboard_spikes(27);
-                if (plot_trace) plotter_static->keyboard_trace(27);
                 plot = false;
             }
             return;
@@ -301,7 +257,6 @@ void plotterGL::keyboard(unsigned char key, int /*x*/, int /*y*/) {
                     if (plot_input) plotter_static->keyboard_input(32);
                     if (plot_weights) plotter_static->keyboard_weights(32);
                     if (plot_spikes) plotter_static->keyboard_spikes(32);
-                    if (plot_trace) plotter_static->keyboard_trace(32);
                     plotter_static->cnt_snapshots++;
                 }
             }
@@ -383,7 +338,7 @@ void plotterGL::display_input() {
 void plotterGL::display_weights() {
 
     int idx = 0;
-    for (int l = 0; l < this->SNN->cnt_layers; l++) {
+    for (int l = 0; l < this->SNN->h_cnt_layers[0]; l++) {
         for (int d = 0; d < this->SNN->h_layers[l]->num_delays; d++) {
 
             glutSetWindow(this->h_weights[idx]->WindowID);
@@ -542,7 +497,7 @@ void plotterGL::display_weights() {
 //calbacks
 void plotterGL::display_spikes() {
 
-    for (int l = 0; l < this->SNN->cnt_layers; l++) {
+    for (int l = 0; l < this->SNN->h_cnt_layers[0]; l++) {
 
         glutSetWindow(this->h_spikes[l]->WindowID);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -623,62 +578,6 @@ void plotterGL::display_spikes() {
 
 
 //calbacks
-void plotterGL::display_trace() {
-
-    for (int l = 0; l < this->SNN->cnt_layers; l++) {
-
-        glutSetWindow(this->h_trace[l]->WindowID);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glEnable(GL_BLEND);
-
-        float alpha = 1.f;
-        glClearColor(0.f, 0.f, 0.f, 1.f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        int width = this->SNN->h_layers[l]->out_size[2];
-        if (width % 2 != 0) width++;
-        int height = this->SNN->h_layers[l]->out_size[1];
-        if (height % 2 != 0) height++;
-
-        for (int rows = 0; rows < this->SNN->h_layers[l]->out_size[1]; rows++) {
-            for (int cols = 0; cols < this->SNN->h_layers[l]->out_size[2]; cols++) {
-
-                int node_index = cols * this->SNN->h_layers[l]->out_size[1] + rows;
-                int cols_aux = cols - width / 2;
-                int rows_aux = height / 2 - rows - 1;
-
-                float red = 0.f, green = 0.f, blue = 0.f, cum_values = 0.f;
-                for (int k = 0; k < this->h_colors[l]->cnt_kernels; k++) {
-                    int kernel = this->h_colors[l]->h_kernels[k];
-                    if (kernel >= this->SNN->h_layers[l]->cnt_kernels)
-                        continue;
-
-                    float value = this->SNN->h_layers[l]->h_kernels[kernel]->h_node_posttrace[node_index];
-                    red += this->h_colors[l]->h_colors_r[k] * value * value;
-                    green += this->h_colors[l]->h_colors_g[k] * value * value;
-                    blue += this->h_colors[l]->h_colors_b[k] * value * value;
-                    cum_values += value;
-                }
-
-                if (cum_values > 0.f) {
-                    red /= cum_values;
-                    green /= cum_values;
-                    blue /= cum_values;
-                }
-
-                glColor4f(red, green, blue, alpha);
-                glRectf((GLfloat) (cols_aux / (width / 2.f)),
-                        (GLfloat) (rows_aux / (this->SNN->h_layers[l]->out_size[1] / 2.f)),
-                        (GLfloat) ((cols_aux+1) / (width / 2.f)),
-                        (GLfloat) ((rows_aux+1) / (height / 2.f)));
-            }
-        }
-    }
-    glFlush();
-}
-
-
-//calbacks
 void plotterGL::keyboard_input(int state) {
 
     glutSetWindow(input_window);
@@ -700,7 +599,7 @@ void plotterGL::keyboard_input(int state) {
 //calbacks
 void plotterGL::timer_weights() {
     int idx = 0;
-    for (int l = 0; l < this->SNN->cnt_layers; l++) {
+    for (int l = 0; l < this->SNN->h_cnt_layers[0]; l++) {
         for (int d = 0; d < this->SNN->h_layers[l]->num_delays; d++) {
             glutSetWindow(this->h_weights[idx]->WindowID);
             glutPostRedisplay();
@@ -713,7 +612,7 @@ void plotterGL::timer_weights() {
 //calbacks
 void plotterGL::keyboard_weights(int state) {
     int idx = 0;
-    for (int l = 0; l < this->SNN->cnt_layers; l++) {
+    for (int l = 0; l < this->SNN->h_cnt_layers[0]; l++) {
         for (int d = 0; d < this->SNN->h_layers[l]->num_delays; d++) {
             glutSetWindow(this->h_weights[idx]->WindowID);
 
@@ -737,7 +636,7 @@ void plotterGL::keyboard_weights(int state) {
 
 //calbacks
 void plotterGL::timer_spikes() {
-    for (int l = 0; l < this->SNN->cnt_layers; l++) {
+    for (int l = 0; l < this->SNN->h_cnt_layers[0]; l++) {
         glutSetWindow(this->h_spikes[l]->WindowID);
         glutPostRedisplay();
     }
@@ -746,7 +645,7 @@ void plotterGL::timer_spikes() {
 
 //calbacks
 void plotterGL::keyboard_spikes(int state) {
-    for (int l = 0; l < this->SNN->cnt_layers; l++) {
+    for (int l = 0; l < this->SNN->h_cnt_layers[0]; l++) {
         glutSetWindow(this->h_spikes[l]->WindowID);
 
         // delete window
@@ -758,36 +657,6 @@ void plotterGL::keyboard_spikes(int state) {
         } else if (state == 32) {
             std::string filename;
             filename += this->snapshots_dir + "/internal" + std::to_string(l) + "_" +
-                    std::to_string(this->cnt_snapshots) + ".ppm";
-            save_image(filename);
-        }
-    }
-}
-
-
-//calbacks
-void plotterGL::timer_trace() {
-    for (int l = 0; l < this->SNN->cnt_layers; l++) {
-        glutSetWindow(this->h_trace[l]->WindowID);
-        glutPostRedisplay();
-    }
-}
-
-
-//calbacks
-void plotterGL::keyboard_trace(int state) {
-    for (int l = 0; l < this->SNN->cnt_layers; l++) {
-        glutSetWindow(this->h_trace[l]->WindowID);
-
-        // delete window
-        if (state == 27) {
-            glutHideWindow();
-            glutDestroyWindow(glutGetWindow());
-
-        // store window
-        } else if (state == 32) {
-            std::string filename;
-            filename += this->snapshots_dir + "/posttrace" + std::to_string(l) + "_" +
                     std::to_string(this->cnt_snapshots) + ".ppm";
             save_image(filename);
         }

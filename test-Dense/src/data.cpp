@@ -1,3 +1,6 @@
+#include <iomanip>
+#include <sstream>
+
 #include "data.h"
 
 
@@ -42,9 +45,9 @@ void indices2buffer(const std::string& dataset_dir, std::vector<std::string>& da
 
 
 void feed_network(const std::string& dataset_dir, std::vector<std::string>& dataset, const float sim_int,
-                  const float sim_step, int sim_num_steps, const float scale_ets, Network *&SNN, plotterGL *plotter,
-                  const bool openGL, const bool data_augmentation, const bool record_activity,
-                  std::string snapshots_dir, std::string weights_out, bool random, bool& break_sim) {
+                  const float sim_step, const int sim_step_range[2], int sim_num_steps, const float scale_ets,
+                  Network *&SNN, plotterGL *plotter, const bool openGL, const bool data_augmentation,
+                  const bool record_activity, std::string snapshots_dir, std::string weights_out, bool random, bool& break_sim) {
 
     if (break_sim) return;
 
@@ -52,17 +55,21 @@ void feed_network(const std::string& dataset_dir, std::vector<std::string>& data
     int folder_num_steps = 0, idx_step = 0, cnt_step = 0, ref_time = 0;
     float ets;
     bool break_feed = false;
-    bool invert_polarity = false, horizontal_flip = false, vertical_flip = false;
+    bool invert_polarity = false, horizontal_flip = false, vertical_flip = false, rotate = false;
     std::string folder, filename, metadata;
     std::vector<float> inputs_ets((unsigned long) SNN->h_inp_size[0] * SNN->h_inp_size[1] * SNN->h_inp_size[2]);
 
-    // select random data folder
+    // select event sequence
     if (random) {
         std::uniform_int_distribution<int> dist(0, (int) dataset.size() - 1);
         idx_folder = dist(random_folder);
     } else {
         idx_folder = cnt_data;
         cnt_data++;
+        if (cnt_data >= dataset.size()) {
+            printf("\nDataset limit reached.\n");
+            break_sim_data = true;
+        }
     }
     folder = dataset[idx_folder];
     if (!folder.empty() && folder[folder.length()-1] == '\r') folder.erase(folder.length()-1);
@@ -75,18 +82,30 @@ void feed_network(const std::string& dataset_dir, std::vector<std::string>& data
         fclose(fp);
     }
 
+    // fix sim_num_steps
+    if (folder_num_steps - sim_step_range[1] <= sim_num_steps || sim_num_steps <= 0.f)
+        sim_num_steps = folder_num_steps - sim_step_range[1] - 1;
+
     // select random starting point
-    if (folder_num_steps <= sim_num_steps || sim_num_steps <= 0.f) sim_num_steps = folder_num_steps - 1;
     if (random) {
-        std::uniform_int_distribution<int> dist(0, folder_num_steps - sim_num_steps);
+        std::uniform_int_distribution<int> dist(sim_step_range[0],
+                                                folder_num_steps - sim_num_steps - sim_step_range[1] + sim_step_range[0]);
         idx_step = dist(random_event);
+    } else {
+        idx_step = sim_step_range[0];
     }
+
+    // scale indices based on sim step
+    idx_step /= (int) sim_step;
+    sim_num_steps /= (int) sim_step;
 
     // data augmentation
     if (data_augmentation) {
         invert_polarity = (bool) random_bool();
         horizontal_flip = (bool) random_bool();
         vertical_flip = (bool) random_bool();
+        if (SNN->h_inp_size[1] == SNN->h_inp_size[2])
+            rotate = (bool) random_bool();
     }
 
     // feed the network
@@ -94,6 +113,9 @@ void feed_network(const std::string& dataset_dir, std::vector<std::string>& data
     signal(SIGINT, interrupt_data);
     if (FILE *fp = fopen(filename.c_str(), "r")) {
         while (fscanf(fp, "%f,%d,%d,%d", &ets, &ex, &ey, &ep) == 4 && !break_sim_data) {
+
+            // check if polarity is considered
+            if (SNN->h_inp_size[0] == 1) ep = 0;
 
             // assign events
             ets *= scale_ets;
@@ -107,6 +129,12 @@ void feed_network(const std::string& dataset_dir, std::vector<std::string>& data
                     ey = ey + 2 * (SNN->h_inp_size[1] / 2 - ey) - 1;
                 if (invert_polarity)
                     ep = ep ? 0 : 1;
+                if (rotate) {
+                    int ex_aux = ex;
+                    ex = ey;
+                    ey = ex_aux;
+                }
+
                 if (ex < 0) ex = 0;
                 if (ey < 0) ey = 0;
 
@@ -118,6 +146,7 @@ void feed_network(const std::string& dataset_dir, std::vector<std::string>& data
                     int idx = ep * SNN->h_inp_size[1] * SNN->h_inp_size[2] * SNN->h_length_delay_inp[0] +
                             idx_node * SNN->h_length_delay_inp[0];
                     SNN->h_inputs[idx]++;
+                    SNN->h_inputs[idx] = 1;
 
                     int idx_ets = ep * SNN->h_inp_size[1] * SNN->h_inp_size[2] + idx_node;
                     inputs_ets[idx_ets] = ets;
@@ -130,22 +159,6 @@ void feed_network(const std::string& dataset_dir, std::vector<std::string>& data
 
                 if (cnt_step >= idx_step) {
 
-                    // input integration time different than simulation step
-                    for (int ch = 0; ch < SNN->h_inp_size[0] && sim_step != sim_int; ch++) {
-                        for (int rows = 0; rows < SNN->h_inp_size[1]; rows++) {
-                            for (int cols = 0; cols < SNN->h_inp_size[2]; cols++) {
-                                int idx_node = cols * SNN->h_inp_size[1] + rows;
-                                int idx = ch * SNN->h_inp_size[1] * SNN->h_inp_size[2] *
-                                        SNN->h_length_delay_inp[0] + idx_node * SNN->h_length_delay_inp[0];
-                                int idx_ets = ch * SNN->h_inp_size[1] * SNN->h_inp_size[2] + idx_node;
-                                if (inputs_ets[idx_ets] > (float) ref_time - (sim_int + 1.f) * sim_step * 1000.f)
-                                    SNN->h_inputs[idx]++;
-                                else
-                                    SNN->h_inputs[idx] = 0;
-                            }
-                        }
-                    }
-
                     // feed the network
                     SNN->feed(break_feed);
                     if (break_feed) break;
@@ -157,12 +170,13 @@ void feed_network(const std::string& dataset_dir, std::vector<std::string>& data
                     #endif
                     #ifdef NPY
                     if (record_activity)
-                        activity_to_npy(SNN, snapshots_dir, weights_out, cnt_runs, cnt_step-idx_step, plotter);
+                        SNN->copy_to_host();
+                        activity_to_npy(SNN, snapshots_dir, weights_out, cnt_runs, cnt_step-idx_step, plotter, true);
                     #endif
                     SNN->update_input();
                 }
                 cnt_step++;
-                if ((cnt_step - idx_step) > sim_num_steps) break;
+                if (cnt_step - idx_step > sim_num_steps) break;
             }
         }
         fclose(fp);
@@ -175,11 +189,11 @@ void feed_network(const std::string& dataset_dir, std::vector<std::string>& data
 }
 
 
-void weights_to_csv(std::string& foldername, Network *&SNN) {
+void weights_to_csv(std::string& foldername, Network *&SNN, std::string dir) {
 
     std::string folder;
     struct stat sb;
-    folder += std::string("weights/");
+    folder += dir + std::string("weights/");
     if (stat(folder.c_str(), &sb) != 0) {
         const int dir_err = mkdir(folder.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
         if (-1 == dir_err) {
@@ -199,7 +213,7 @@ void weights_to_csv(std::string& foldername, Network *&SNN) {
     // file per layer
     std::string filename;
     std::ofstream file;
-    for (int l = 0; l < SNN->cnt_layers; l++) {
+    for (int l = 0; l < SNN->h_cnt_layers[0]; l++) {
 
         // excitatory weights
         filename += folder + std::string("/") + std::string("layer_") + std::to_string(l) +
@@ -281,7 +295,7 @@ void csv_to_weights(std::string& folder, Network *&SNN, plotterGL *&plotter) {
     std::string filename, w;
     int structure[7];
     bool error = false;
-    for (int l = 0; l < SNN->cnt_layers; l++) {
+    for (int l = 0; l < SNN->h_cnt_layers[0]; l++) {
 
         if (!SNN->h_layers[l]->load_weights)
             continue;
@@ -339,7 +353,7 @@ void csv_to_weights(std::string& folder, Network *&SNN, plotterGL *&plotter) {
                SNN->h_layers[structure[6]]->length_delay_inp);
     } else {
 
-        for (int l = 0; l < SNN->cnt_layers; l++) {
+        for (int l = 0; l < SNN->h_cnt_layers[0]; l++) {
 
             if (!SNN->h_layers[l]->load_weights)
                 continue;
@@ -448,7 +462,7 @@ void csv_to_weights(std::string& folder, Network *&SNN, plotterGL *&plotter) {
 
 // store network internal data to numpy files
 void activity_to_npy(Network *&SNN, std::string snapshot_dir, std::string folder, int run, int step,
-                     plotterGL *plotter) {
+                     plotterGL *plotter, bool store_weights) {
 
     struct stat sb;
     if (stat(snapshot_dir.c_str(), &sb) != 0) {
@@ -456,7 +470,7 @@ void activity_to_npy(Network *&SNN, std::string snapshot_dir, std::string folder
         return;
     }
 
-    std::string foldername, foldername_sub, filename;
+    std::string foldername, foldername_sub, filename, run_string, step_string;
     foldername = snapshot_dir + std::string("/") + folder + std::string("/");
     if (stat(foldername.c_str(), &sb) != 0) {
         const int dir_err = mkdir(foldername.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
@@ -467,7 +481,12 @@ void activity_to_npy(Network *&SNN, std::string snapshot_dir, std::string folder
         }
     }
 
-    foldername_sub = foldername + std::to_string(run) + std::string("_") + std::to_string(step) + std::string("/");
+    std::stringstream ss1, ss2;
+    ss1 << std::setw(5) << std::setfill('0') << run;
+    ss1 >> run_string;
+    ss2 << std::setw(5) << std::setfill('0') << step;
+    ss2 >> step_string;
+    foldername_sub = foldername + run_string + std::string("_") + step_string + std::string("/");
     if (stat(foldername_sub.c_str(), &sb) != 0) {
         const int dir_err = mkdir(foldername_sub.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
         if (-1 == dir_err) {
@@ -500,7 +519,7 @@ void activity_to_npy(Network *&SNN, std::string snapshot_dir, std::string folder
     filename.clear();
 
     // network data
-    for (int l = 0; l < SNN->cnt_layers; l++) {
+    for (int l = 0; l < SNN->h_cnt_layers[0]; l++) {
         std::vector<float> data((unsigned long) SNN->h_layers[l]->cnt_kernels * SNN->h_layers[l]->out_node_kernel);
 
         for (int k = 0; k < SNN->h_layers[l]->cnt_kernels; k++) {
@@ -542,5 +561,20 @@ void activity_to_npy(Network *&SNN, std::string snapshot_dir, std::string folder
             filename.clear();
         }
         #endif
+    }
+
+    // weights
+    if (store_weights) {
+        std::string weights_dir, weights_subdir;
+        weights_dir += foldername_sub + std::string("weights/");
+        if (stat(weights_dir.c_str(), &sb) != 0) {
+            const int dir_err = mkdir(weights_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+            if (-1 == dir_err) {
+                std::cout << weights_dir;
+                printf("Error: snapshots_dir could not be created\n");
+                return;
+            }
+        }
+        weights_to_csv(folder, SNN, foldername_sub);
     }
 }

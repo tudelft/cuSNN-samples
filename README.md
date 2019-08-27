@@ -15,5 +15,3 @@ More varied samples will be included in the near future.
 * **test-MSConv**: Test a three-layer network with a SS-Conv, a Merge, and an MS-Conv layer.
 * **train-Dense**: Train a Dense layer, preceded by pre-trained SS-Conv and MS-Conv layers.
 * **test-MSConv**: Test a five-layer network with a SS-Conv, a Merge, an MS-Conv, a Pooling, and a Dense layer.
-* **record-spikes**: Record the spiking activity of a five-layer network with a SS-Conv, a Merge, an MS-Conv, 
-a Pooling, and a Dense layer. Requires the [**cnpy library**](https://github.com/rogersce/cnpy "cnpy library (C++ arrays to Numpy)").
